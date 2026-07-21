@@ -48,14 +48,14 @@ const Register = () => {
       <h1>Create your account</h1>
       {message && <div className="form-message error" role="alert">{message}</div>}
       <div className="form-row">
-        <label>First name<input required name="firstName" autoComplete="given-name" value={form.firstName} onChange={update} /></label>
-        <label>Last name<input required name="lastName" autoComplete="family-name" value={form.lastName} onChange={update} /></label>
+        <label>First name<input required name="firstName" placeholder="First Name" autoComplete="given-name" value={form.firstName} onChange={update} /></label>
+        <label>Last name<input required name="lastName" placeholder="Last Name" autoComplete="family-name" value={form.lastName} onChange={update} /></label>
       </div>
-      <label>Username<input required name="userName" autoComplete="username" value={form.userName} onChange={update} /></label>
-      <label>Email<input required name="email" type="email" autoComplete="email" value={form.email} onChange={update} /></label>
-      <label>Password<input required minLength="8" name="password" type="password" autoComplete="new-password" value={form.password} onChange={update} /></label>
-      <label>Confirm password<input required minLength="8" name="confirmPassword" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={update} /></label>
-      <button className="primary-button" disabled={busy}>{busy ? 'Creating account...' : 'Create account'}</button>
+      <label>Username<input required name="userName" placeholder="Username" autoComplete="username" value={form.userName} onChange={update} /></label>
+      <label>Email<input required name="email" type="email" placeholder="Email" autoComplete="email" value={form.email} onChange={update} /></label>
+      <label>Password<input required minLength="8" name="password" type="password" placeholder="Password" autoComplete="new-password" value={form.password} onChange={update} /></label>
+      <label>Confirm password<input required minLength="8" name="confirmPassword" type="password" placeholder="Confirm Password" autoComplete="new-password" value={form.confirmPassword} onChange={update} /></label>
+      <button className="primary-button" disabled={busy}>{busy ? 'Registering...' : 'Register'}</button>
       <p>Already registered? <Link to="/login">Sign in</Link>.</p>
     </form>
   </main></>;

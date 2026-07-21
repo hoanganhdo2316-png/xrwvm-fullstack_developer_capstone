@@ -1,0 +1,16 @@
+curl -i -c cookies.txt -X POST http://127.0.0.1:8000/djangoapp/login -H 'Content-Type: application/json' -d '{"userName":"admin","password":"admin123"}'
+HTTP/1.1 200 OK
+Server: gunicorn
+Date: Tue, 21 Jul 2026 10:51:53 GMT
+Connection: close
+Content-Type: application/json
+X-Frame-Options: DENY
+Vary: Cookie
+Content-Length: 81
+X-Content-Type-Options: nosniff
+Referrer-Policy: same-origin
+Cross-Origin-Opener-Policy: same-origin
+Set-Cookie: csrftoken=fgKh6xVRx12KdVbR0Tt7QTDfUiz3bAJT; expires=Tue, 20 Jul 2027 10:51:53 GMT; Max-Age=31449600; Path=/; SameSite=Lax
+Set-Cookie: sessionid=59lplkgzns3rc3nq80bnc565moyxg79y; expires=Tue, 04 Aug 2026 10:51:53 GMT; HttpOnly; Max-Age=1209600; Path=/; SameSite=Lax
+
+{"status": "Authenticated", "userName": "admin", "firstName": "", "lastName": ""}

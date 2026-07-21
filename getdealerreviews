@@ -1,0 +1,13 @@
+curl -i http://127.0.0.1:8000/djangoapp/reviews/dealer/1
+HTTP/1.1 200 OK
+Server: gunicorn
+Date: Tue, 21 Jul 2026 11:08:15 GMT
+Connection: close
+Content-Type: application/json
+X-Frame-Options: DENY
+Content-Length: 30
+X-Content-Type-Options: nosniff
+Referrer-Policy: same-origin
+Cross-Origin-Opener-Policy: same-origin
+
+{"status": 200, "reviews": []}
