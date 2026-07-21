@@ -42,7 +42,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/database-api:latest
+          image: us.icr.io/sn-labs-hoanganhdo23/database-api:latest
           ports: [{ containerPort: 3030 }]
           env:
             - { name: MONGODB_URL, value: "mongodb://mongo-db:27017/dealershipsDB" }

@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
         - name: sentiment
-          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/sentiment:latest
+          image: us.icr.io/sn-labs-hoanganhdo23/sentiment:latest
           ports: [{ containerPort: 5050 }]
           resources:
             requests: { cpu: 50m, memory: 96Mi }

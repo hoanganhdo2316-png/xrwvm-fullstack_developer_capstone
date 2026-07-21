@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/dealership-web:latest
+          image: us.icr.io/sn-labs-hoanganhdo23/dealership-web:latest
           ports: [{ containerPort: 8000 }]
           envFrom: [{ configMapRef: { name: dealership-config } }]
           env:
