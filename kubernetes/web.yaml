@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dealership-config
+data:
+  EXPRESS_BACKEND_URL: http://database-api:3030
+  SENTIMENT_ANALYZER_URL: http://sentiment:5050
+  DJANGO_DEBUG: "false"
+  DJANGO_ALLOWED_HOSTS: "*"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dealership-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: dealership-web }
+  template:
+    metadata:
+      labels: { app: dealership-web }
+    spec:
+      containers:
+        - name: web
+          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/dealership-web:latest
+          ports: [{ containerPort: 8000 }]
+          envFrom: [{ configMapRef: { name: dealership-config } }]
+          env:
+            - name: DJANGO_SECRET_KEY
+              valueFrom: { secretKeyRef: { name: dealership-secrets, key: django-secret-key } }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dealership-web
+spec:
+  selector: { app: dealership-web }
+  ports: [{ port: 80, targetPort: 8000 }]
+  type: ClusterIP

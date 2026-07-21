@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentiment
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: sentiment }
+  template:
+    metadata:
+      labels: { app: sentiment }
+    spec:
+      containers:
+        - name: sentiment
+          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/sentiment:latest
+          ports: [{ containerPort: 5050 }]
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 250m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment
+spec:
+  selector: { app: sentiment }
+  ports: [{ port: 5050, targetPort: 5050 }]

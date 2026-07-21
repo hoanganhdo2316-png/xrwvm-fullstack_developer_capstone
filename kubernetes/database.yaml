@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mongodb }
+  template:
+    metadata:
+      labels: { app: mongodb }
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7
+          ports: [{ containerPort: 27017 }]
+          volumeMounts: [{ name: data, mountPath: /data/db }]
+          resources:
+            requests: { cpu: 100m, memory: 192Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+      volumes: [{ name: data, emptyDir: {} }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-db
+spec:
+  selector: { app: mongodb }
+  ports: [{ port: 27017, targetPort: 27017 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: database-api }
+  template:
+    metadata:
+      labels: { app: database-api }
+    spec:
+      containers:
+        - name: api
+          image: REPLACE_REGISTRY/REPLACE_NAMESPACE/database-api:latest
+          ports: [{ containerPort: 3030 }]
+          env:
+            - { name: MONGODB_URL, value: "mongodb://mongo-db:27017/dealershipsDB" }
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 250m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-api
+spec:
+  selector: { app: database-api }
+  ports: [{ port: 3030, targetPort: 3030 }]

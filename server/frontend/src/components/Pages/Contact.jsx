@@ -1,0 +1,3 @@
+import Header from '../Header/Header';
+const Contact = () => <><Header/><main className="page-shell contact-layout"><section className="page-intro"><p className="eyebrow">Contact</p><h1>We are here to help.</h1><p>Questions about a dealership listing or your account? Contact our support team during business hours.</p></section><address className="contact-details"><h2>Best Cars Support</h2><p>100 Automotive Way<br/>Detroit, MI 48201</p><p><a href="tel:+18005550142">+1 (800) 555-0142</a><br/><a href="mailto:support@bestcars.example">support@bestcars.example</a></p><p>Monday to Friday<br/>9:00 AM to 5:00 PM ET</p></address></main></>;
+export default Contact;

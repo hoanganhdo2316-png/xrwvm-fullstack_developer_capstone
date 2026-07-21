@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Local JavaScript and build artifacts
+node_modules/
+server/frontend/build/
+server/staticfiles/
+# Local environment files (examples remain tracked)
+.env
+.env.*
+!.env.example
+!*.example

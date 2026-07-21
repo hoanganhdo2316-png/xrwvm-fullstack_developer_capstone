@@ -1,35 +1,47 @@
-from flask import Flask
+from pathlib import Path
+from flask import Flask, jsonify, request
+from nltk.data import path as nltk_data_path
 from nltk.sentiment import SentimentIntensityAnalyzer
-import json
-app = Flask("Sentiment Analyzer")
 
+app = Flask(__name__)
+NLTK_ROOT = Path(__file__).resolve().parent
+nltk_data_path.insert(0, str(NLTK_ROOT))
 sia = SentimentIntensityAnalyzer()
 
 
-@app.get('/')
+def classify(text):
+    compound = sia.polarity_scores(text)["compound"]
+    if compound >= 0.05:
+        return "positive"
+    if compound <= -0.05:
+        return "negative"
+    return "neutral"
+
+
+@app.get("/")
 def home():
-    return "Welcome to the Sentiment Analyzer. \
-    Use /analyze/text to get the sentiment"
+    return jsonify({"service": "sentiment-analyzer", "status": "ok"})
 
 
-@app.get('/analyze/<input_txt>')
-def analyze_sentiment(input_txt):
+@app.post("/analyze")
+def analyze_post():
+    if not request.is_json:
+        return jsonify({"error": "Content-Type must be application/json"}), 415
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
+    text = data.get("text", "")
+    if not isinstance(text, str) or not text.strip():
+        return jsonify({"error": "Review text is required"}), 400
+    return jsonify({"sentiment": classify(text.strip())})
 
-    scores = sia.polarity_scores(input_txt)
-    print(scores)
-    pos = float(scores['pos'])
-    neg = float(scores['neg'])
-    neu = float(scores['neu'])
-    res = "positive"
-    print("pos neg nue ", pos, neg, neu)
-    if (neg > pos and neg > neu):
-        res = "negative"
-    elif (neu > neg and neu > pos):
-        res = "neutral"
-    res = json.dumps({"sentiment": res})
-    print(res)
-    return res
+
+@app.get("/analyze/<path:input_txt>")
+def analyze_get(input_txt):
+    if not input_txt.strip():
+        return jsonify({"error": "Review text is required"}), 400
+    return jsonify({"sentiment": classify(input_txt.strip())})
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5050)
