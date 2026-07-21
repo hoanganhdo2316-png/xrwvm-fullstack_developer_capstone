@@ -10,6 +10,7 @@ urlpatterns = [
     path("logout", views.logout_user, name="logout"),
     path("loginstatus", views.login_status, name="login_status"),
     path("get_dealers", views.get_dealerships, name="dealers"),
+    path("fetchDealers", views.get_dealerships, name="fetchDealers"),
     path("get_dealers/<str:state>", views.get_dealerships, name="dealers_by_state"),
     path("dealer/<int:dealer_id>", views.get_dealer_details, name="dealer"),
     path("reviews/dealer/<int:dealer_id>", views.get_dealer_reviews, name="reviews"),
