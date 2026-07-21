@@ -44,3 +44,6 @@ Django settings, URLs, models, admin, population, REST helper and views; Express
 ## Assumptions
 
 The supplied vehicle dataset contains years through 2023, while modern deployments may accept newer vehicles; validation uses 2015 through 2030 while preserving all lab data. Review names are always overwritten with the authenticated Django user's display name. Sentiment failures degrade individual reviews to neutral so dealer pages remain usable when that optional upstream service is unavailable.
+## Current review documentation
+
+The current working-tree audit, reproduced validation results, security review, and grading evidence map are maintained in `CAPSTONE_COMPLETION_REPORT.md`. The independent release review is recorded in `SENIOR_REVIEW_REPORT.md`.

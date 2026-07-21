@@ -1,34 +1,56 @@
 name: CI
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+
 jobs:
   django:
+    name: Django checks
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: server } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.11' }
-      - run: pip install -r requirements.txt flake8
-      - run: flake8 djangoapp djangoproj --max-line-length=120 --exclude=migrations
-      - run: python manage.py check
-      - run: python manage.py makemigrations --check --dry-run
+        with: { python-version: '3.11', cache: pip, cache-dependency-path: server/requirements.txt }
+      - name: Install dependencies
+        run: pip install -r requirements.txt flake8
+      - name: Compile Python
+        run: python -m compileall -q djangoapp djangoproj
+      - name: Lint Python
+        run: flake8 djangoapp djangoproj --max-line-length=120 --exclude=migrations
+      - name: Check Django
+        run: python manage.py check
+      - name: Check migrations
+        run: python manage.py makemigrations --check --dry-run
+      - name: Run Django tests
+        run: python manage.py test
+      - name: Run sentiment tests
+        run: python -m unittest djangoapp.microservices.test_app
+
   frontend:
+    name: React build
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: server/frontend } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: '18', cache: npm, cache-dependency-path: server/frontend/package-lock.json }
-      - run: npm ci
-      - run: npm run build
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
+
   express:
+    name: Express checks
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: server/database } }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '18' }
-      - run: npm install
-      - run: npm test
+        with: { node-version: '18', cache: npm, cache-dependency-path: server/database/package-lock.json }
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate Node source
+        run: npm test

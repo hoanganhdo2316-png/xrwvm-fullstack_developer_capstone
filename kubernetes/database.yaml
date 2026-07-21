@@ -13,7 +13,16 @@ spec:
       containers:
         - name: mongodb
           image: mongo:7
+          imagePullPolicy: IfNotPresent
           ports: [{ containerPort: 27017 }]
+          readinessProbe:
+            exec: { command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"] }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 27017 }
+            initialDelaySeconds: 20
+            periodSeconds: 20
           volumeMounts: [{ name: data, mountPath: /data/db }]
           resources:
             requests: { cpu: 100m, memory: 192Mi }
@@ -26,7 +35,7 @@ metadata:
   name: mongo-db
 spec:
   selector: { app: mongodb }
-  ports: [{ port: 27017, targetPort: 27017 }]
+  ports: [{ name: mongodb, port: 27017, targetPort: 27017 }]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,9 +52,18 @@ spec:
       containers:
         - name: api
           image: us.icr.io/sn-labs-hoanganhdo23/database-api:latest
+          imagePullPolicy: Always
           ports: [{ containerPort: 3030 }]
           env:
             - { name: MONGODB_URL, value: "mongodb://mongo-db:27017/dealershipsDB" }
+          readinessProbe:
+            httpGet: { path: /health, port: 3030 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /, port: 3030 }
+            initialDelaySeconds: 20
+            periodSeconds: 20
           resources:
             requests: { cpu: 50m, memory: 96Mi }
             limits: { cpu: 250m, memory: 256Mi }
@@ -56,4 +74,4 @@ metadata:
   name: database-api
 spec:
   selector: { app: database-api }
-  ports: [{ port: 3030, targetPort: 3030 }]
+  ports: [{ name: http, port: 3030, targetPort: 3030 }]

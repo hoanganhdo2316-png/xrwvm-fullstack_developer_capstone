@@ -23,11 +23,20 @@ spec:
       containers:
         - name: web
           image: us.icr.io/sn-labs-hoanganhdo23/dealership-web:latest
+          imagePullPolicy: Always
           ports: [{ containerPort: 8000 }]
           envFrom: [{ configMapRef: { name: dealership-config } }]
           env:
             - name: DJANGO_SECRET_KEY
               valueFrom: { secretKeyRef: { name: dealership-secrets, key: django-secret-key } }
+          readinessProbe:
+            httpGet: { path: /djangoapp/health, port: 8000 }
+            initialDelaySeconds: 8
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /djangoapp/health, port: 8000 }
+            initialDelaySeconds: 25
+            periodSeconds: 20
           resources:
             requests: { cpu: 100m, memory: 128Mi }
             limits: { cpu: 500m, memory: 512Mi }
@@ -38,5 +47,5 @@ metadata:
   name: dealership-web
 spec:
   selector: { app: dealership-web }
-  ports: [{ port: 80, targetPort: 8000 }]
+  ports: [{ name: http, port: 80, targetPort: 8000 }]
   type: ClusterIP

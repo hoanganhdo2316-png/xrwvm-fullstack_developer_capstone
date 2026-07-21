@@ -1,115 +1,236 @@
-# Best Cars Dealership Capstone Preparation
+# Best Cars Dealership Capstone
 
-This repository is a locally runnable implementation of the IBM Full Stack Software Developer capstone starter. It combines static marketing pages, a React client, a Django session/authentication and proxy layer, an Express/MongoDB dealership service, and a Flask/VADER sentiment service.
+Best Cars is the IBM Full Stack Software Developer Capstone application. It lets visitors browse dealerships and customer reviews, filter dealers by state, register and sign in, and submit vehicle purchase reviews. Django authenticates users and coordinates the React client, the Express/MongoDB data API, and the VADER sentiment microservice.
+
+Repository: <https://github.com/hoanganhdo2316-png/xrwvm-fullstack_developer_capstone>
+
+## Features
+
+- Responsive Home, About Us, and Contact Us pages with consistent navigation.
+- Django registration, login, logout, and session-status APIs with hashed passwords.
+- Dealer directory with data-backed state filtering and an All states option.
+- Dealer details and customer reviews with positive, neutral, and negative indicators.
+- Authenticated review submission with purchase status, date, make, model, year, and review text.
+- Express/Mongoose data validation and seed-on-empty MongoDB initialization.
+- Offline VADER sentiment analysis using the bundled lexicon.
+- Multi-stage Docker builds, Kubernetes resources, and GitHub Actions checks.
 
 ## Architecture and ports
 
-| Service | Purpose | Local port |
+| Component | Responsibility | Port |
 | --- | --- | --- |
-| React development server | Browser UI | 3000 |
-| Django / Gunicorn | Authentication, vehicle models, static pages, API proxy | 8000 |
-| Express | Dealership and review API | 3030 |
-| MongoDB | Dealer/review persistence | 27017 |
-| Flask / Gunicorn | Sentiment classification | 5050 |
+| React | Browser routes and interactive user flows | 3000 in development |
+| Django/Gunicorn | Static pages, sessions, vehicle reference data, API proxy | 8000 |
+| Express | Dealership and review persistence API | 3030 |
+| MongoDB | Dealership and review collections | 27017 |
+| Flask/Gunicorn | VADER sentiment classification | 5050 |
 
-The browser calls `/djangoapp/*`. Django keeps the authenticated session, proxies dealer/review calls to Express, and enriches reviews with sentiment from Flask. Express stores dealership and review data in MongoDB and seeds the provided JSON only when collections are empty. Django stores users and car make/model reference data in SQLite for local development.
+Request flow:
 
-## Environment
+```text
+Browser -> Django /djangoapp/* -> Express -> MongoDB
+                            \-> Sentiment service
+```
 
-Copy `.env.example` to an untracked `.env` or export its values. Required deployment values are:
+Django serves the production React bundle from `server/frontend/build` and static marketing assets through WhiteNoise. Its container applies database migrations before starting Gunicorn.
 
-- `DJANGO_SECRET_KEY`: a long random production secret.
-- `DJANGO_DEBUG`: `false` outside local development.
-- `DJANGO_ALLOWED_HOSTS`: comma-separated public hostnames.
-- `DJANGO_CSRF_TRUSTED_ORIGINS`: comma-separated HTTPS origins when needed.
-- `EXPRESS_BACKEND_URL`: Express base URL, default `http://localhost:3030`.
-- `SENTIMENT_ANALYZER_URL`: sentiment base URL, default `http://localhost:5050`.
-- `MONGODB_URL`: MongoDB connection string, default Compose service URL.
-- `UPSTREAM_TIMEOUT_SECONDS`: Django proxy timeout, default `8`.
+## Repository structure
 
-No real credentials belong in the tracked `.env.example` or Kubernetes example Secret.
+```text
+.github/workflows/ci.yml           Continuous integration
+kubernetes/                        MongoDB, Express, sentiment, and web manifests
+server/Dockerfile                  React build + Django/Gunicorn image
+server/djangoapp/                  Models, views, API helpers, tests, sentiment service
+server/djangoproj/                 Django settings and root URLs
+server/database/                   Express/Mongoose service and seed data
+server/frontend/                   React application and static HTML pages
+.env.example                       Safe configuration reference
+CAPSTONE_COMPLETION_REPORT.md      Rubric and evidence guide
+```
+
+## Prerequisites
+
+- Python 3.11 or a compatible current Python 3 release
+- Node.js 18 and npm
+- MongoDB 7, or Docker Compose
+- Docker and kubectl only for container/deployment work
+
+## Environment variables
+
+Use [.env.example](.env.example) as the reference. Do not store real credentials in Git.
+
+| Variable | Purpose | Safe local default |
+| --- | --- | --- |
+| `EXPRESS_BACKEND_URL` | Django-to-Express base URL | `http://localhost:3030` |
+| `SENTIMENT_ANALYZER_URL` | Django-to-Flask base URL | `http://localhost:5050` |
+| `UPSTREAM_TIMEOUT_SECONDS` | Proxy timeout | `8` |
+| `DJANGO_SECRET_KEY` | Django cryptographic secret; required when debug is false | local fallback only in debug |
+| `DJANGO_DEBUG` | Django debug mode | `true` |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated hosts | `localhost,127.0.0.1` |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated HTTPS origins | empty |
+| `DJANGO_SECURE_COOKIES` | Secure session and CSRF cookies | false locally |
+| `DJANGO_SECURE_SSL_REDIRECT` | Redirect HTTP to HTTPS | false locally |
+| `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration | `0` locally |
+| `MONGODB_URL` | Express MongoDB connection | Compose service URL |
+| `PORT` | Express port | `3030` |
+
+The tracked `server/djangoapp/.env` contains local service URLs only, not credentials. Deployment environment variables override those values.
 
 ## Local setup
 
-Use Python 3.11+ and Node 18.
+### Django
 
-```powershell
+```bash
 cd server
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+python -m pip install -r requirements.txt
 python manage.py migrate
 python manage.py shell -c "from djangoapp.populate import initiate; print(initiate())"
 python manage.py runserver 8000
 ```
 
-In separate terminals:
+### MongoDB and Express
 
-```powershell
-cd server\database
-npm install
-# Start MongoDB first, or use: docker compose up --build
-$env:MONGODB_URL='mongodb://localhost:27017/dealershipsDB'
+The simplest option starts both services:
+
+```bash
+docker compose -f server/database/docker-compose.yml up --build
+```
+
+For an existing local MongoDB:
+
+```bash
+cd server/database
+npm ci
+# PowerShell: $env:MONGODB_URL='mongodb://localhost:27017/dealershipsDB'
+# Bash: export MONGODB_URL='mongodb://localhost:27017/dealershipsDB'
 npm start
 ```
 
-```powershell
-cd server\djangoapp\microservices
-pip install -r requirements.txt
+Express seeds the supplied dealer and review JSON only when the corresponding collections are empty.
+
+### Sentiment service
+
+```bash
+cd server/djangoapp/microservices
+python -m pip install -r requirements.txt
 python app.py
 ```
 
-```powershell
-cd server\frontend
+No interactive NLTK download is needed; `sentiment/vader_lexicon.zip` is included.
+
+### React development server
+
+```bash
+cd server/frontend
 npm ci
-$env:REACT_APP_API_URL='http://localhost:8000'
 npm start
 ```
 
-The declared Create React App development proxy sends relative `/djangoapp` calls to Django on port 8000. The static Home, About, and Contact pages are available directly from Django at `/`, `/about`, and `/contact`.
+The package proxy forwards `/djangoapp` calls to Django at `http://localhost:8000`.
 
-## Docker
+## Routes and endpoints
 
-- `server/database/docker-compose.yml` runs MongoDB and Express together.
-- `server/djangoapp/microservices/Dockerfile` builds the offline VADER service; the lexicon is included in the image.
-- `server/Dockerfile` builds the React bundle and Django/Gunicorn image.
-- `server/frontend/Dockerfile` is an optional standalone Nginx React image.
+### Browser routes
 
-Build examples:
+| Route | Page |
+| --- | --- |
+| `/` | Home |
+| `/about` | About Us |
+| `/contact` | Contact Us |
+| `/login` | Login |
+| `/register` | Registration |
+| `/dealers` | Dealer directory |
+| `/dealer/:id` | Dealer details and reviews |
+| `/postreview/:id` | Protected review form |
 
-```powershell
-docker compose -f server/database/docker-compose.yml up --build
-docker build -t sentiment server/djangoapp/microservices
+### Django JSON endpoints
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/djangoapp/health` | Web service health |
+| POST | `/djangoapp/register` | Register and start a session |
+| POST | `/djangoapp/login` | Authenticate |
+| POST/GET | `/djangoapp/logout` | End session |
+| GET | `/djangoapp/loginstatus` | Current session state |
+| GET | `/djangoapp/get_dealers[/<state>]` | Dealer list/filter |
+| GET | `/djangoapp/dealer/<id>` | Dealer details |
+| GET | `/djangoapp/reviews/dealer/<id>` | Reviews plus sentiment |
+| POST | `/djangoapp/add_review` | Authenticated review submission |
+| GET | `/djangoapp/get_cars` | Car makes and models |
+
+### Express and sentiment endpoints
+
+- Express: `/health`, `/fetchDealers`, `/fetchDealers/:state`, `/fetchDealer/:id`, `/fetchReviews`, `/fetchReviews/dealer/:id`, and `POST /insert_review`.
+- Sentiment: `GET /`, `POST /analyze` with `{"text":"..."}`, and the lab-compatible `GET /analyze/<text>`.
+
+## Docker images
+
+```bash
 docker build -t dealership-web server
+docker build -t database-api server/database
+docker build -t sentiment server/djangoapp/microservices
+docker build -t dealership-frontend server/frontend
 ```
 
-## Kubernetes and IBM Cloud deployment
+The standalone Nginx frontend image is optional. The deployed `dealership-web` image already contains the production React bundle.
 
-Manifests are in `kubernetes/`. Before applying them:
+## Kubernetes and IBM Cloud
 
-1. Replace every `REPLACE_REGISTRY/REPLACE_NAMESPACE/...` image reference with images pushed to the lab registry.
-2. Create `dealership-secrets` from a real Django secret; do not apply `secret.example.yaml` unchanged.
-3. Replace the lab-only `emptyDir` MongoDB volume with persistent storage if data must survive pod replacement.
-4. Add an Ingress/Route or change the web Service type to the mechanism required by the Coursera IBM Cloud environment.
-5. Set real allowed hosts and trusted HTTPS origins in the ConfigMap.
+The manifests preserve the grading deployment image names:
 
-Example: `kubectl apply -f kubernetes/database.yaml -f kubernetes/sentiment.yaml -f kubernetes/web.yaml` after images and the Secret exist.
+- `us.icr.io/sn-labs-hoanganhdo23/dealership-web:latest`
+- `us.icr.io/sn-labs-hoanganhdo23/database-api:latest`
+- `us.icr.io/sn-labs-hoanganhdo23/sentiment:latest`
+
+Create the Django Secret without putting its value in Git:
+
+```bash
+kubectl create secret generic dealership-secrets --from-literal=django-secret-key='REPLACE_LOCALLY'
+kubectl apply -f kubernetes/database.yaml
+kubectl apply -f kubernetes/sentiment.yaml
+kubectl apply -f kubernetes/web.yaml
+kubectl get deployments,pods,services
+```
+
+`dealership-web` is intentionally a `ClusterIP` service. Expose it using the route, Ingress, port-forward, or service type required by the current IBM Skills Network lab. MongoDB uses `emptyDir` for a lightweight lab deployment, so its data resets if that pod is replaced; use a PersistentVolumeClaim for a durable non-lab deployment.
 
 ## Validation
 
-```powershell
+```bash
 cd server
+python -m compileall -q djangoapp djangoproj
 python manage.py check
 python manage.py makemigrations --check --dry-run
+python manage.py test
+python -m unittest djangoapp.microservices.test_app
 flake8 djangoapp djangoproj --max-line-length=120 --exclude=migrations --jobs=1
 
 cd frontend
 npm ci
 npm run build
 
-cd ..\database
-npm install
+cd ../database
+npm ci
 npm test
 ```
 
-The GitHub Actions workflow performs the Django, React, and Express checks on push and pull requests. Deployment and live MongoDB integration remain environment-dependent and are intentionally not claimed as local successes.
+CI runs these meaningful checks on pushes and pull requests targeting `main`. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+## Security notes
+
+- Django hashes passwords through its authentication framework; the registration UI validates all rubric fields while the API remains compatible with the lab's minimal username/password payload.
+- Production startup fails when `DJANGO_DEBUG=false` and `DJANGO_SECRET_KEY` is absent.
+- Review authorship is taken from the authenticated session, not trusted from browser input.
+- Service URLs and secrets are environment-driven. `kubernetes/secret.example.yaml` is a template only.
+- Do not commit IBM Cloud API keys, registry tokens, kubeconfig files, generated Secrets, or evidence containing credentials.
+
+## Grading evidence
+
+See [CAPSTONE_COMPLETION_REPORT.md](CAPSTONE_COMPLETION_REPORT.md) for the rubric checklist, exact code locations, suggested screenshots, GitHub links, and terminal evidence commands. Cloud availability is not claimed by this README; capture current IBM Cloud evidence immediately before submission.
+
+## License
+
+Apache License 2.0. Original course starter attribution is retained in [LICENSE](LICENSE).

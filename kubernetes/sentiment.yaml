@@ -13,7 +13,16 @@ spec:
       containers:
         - name: sentiment
           image: us.icr.io/sn-labs-hoanganhdo23/sentiment:latest
+          imagePullPolicy: Always
           ports: [{ containerPort: 5050 }]
+          readinessProbe:
+            httpGet: { path: /, port: 5050 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /, port: 5050 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
           resources:
             requests: { cpu: 50m, memory: 96Mi }
             limits: { cpu: 250m, memory: 256Mi }
@@ -24,4 +33,4 @@ metadata:
   name: sentiment
 spec:
   selector: { app: sentiment }
-  ports: [{ port: 5050, targetPort: 5050 }]
+  ports: [{ name: http, port: 5050, targetPort: 5050 }]
